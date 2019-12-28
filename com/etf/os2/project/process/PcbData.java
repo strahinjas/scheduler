@@ -1,31 +1,38 @@
 package com.etf.os2.project.process;
 
-public class PcbData implements Comparable<PcbData> {
+public class PcbData implements Comparable<PcbData>
+{
 	protected int priority;
 	protected int affinity;
 
-	public PcbData(int priority) {
+	public PcbData(int priority)
+	{
 		this.priority = priority;
 	}
 
-	public int getPriority() {
+	public int getPriority()
+	{
 		return priority;
 	}
 
-	public void setPriority(int priority) {
+	public void setPriority(int priority)
+	{
 		this.priority = priority;
 	}
 
-	public int getAffinity() {
+	public int getAffinity()
+	{
 		return affinity;
 	}
 
-	public void setAffinity(int affinity) {
+	public void setAffinity(int affinity)
+	{
 		this.affinity = affinity;
 	}
 
 	@Override
-	public int compareTo(PcbData o) {
+	public int compareTo(PcbData o)
+	{
 		return Integer.compare(priority, o.priority);
 	}
 

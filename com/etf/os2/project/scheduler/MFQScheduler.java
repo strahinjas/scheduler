@@ -12,16 +12,18 @@ import com.etf.os2.project.process.PcbData;
 
 // Multilevel Feedback Queue Scheduler
 
-public class MFQScheduler extends Scheduler {
+public class MFQScheduler extends Scheduler
+{
 	private static final long PERIOD = 1000;
-	
+
 	private long[] quantum;
 	private int[][] affinities;
 	private List<List<Pcb>> queue;
 
 	private Timer timer;
 
-	public MFQScheduler(int levels, long[] quantum) {
+	public MFQScheduler(int levels, long[] quantum)
+	{
 		super();
 		this.quantum = quantum;
 		queue = new ArrayList<>(levels);
@@ -29,67 +31,89 @@ public class MFQScheduler extends Scheduler {
 			queue.add(new LinkedList<>());
 
 		timer = new Timer(true);
-		timer.schedule(new TimerTask() {
+		timer.schedule(new TimerTask()
+		{
 			@Override
-			public void run() { age(); }
+			public void run()
+			{
+				age();
+			}
 		}, PERIOD, PERIOD);
 	}
 
 	@Override
-	public synchronized Pcb get(int cpuId) {
+	public synchronized Pcb get(int cpuId)
+	{
 		// O(numOfProcesses)
-		try {
+		try
+		{
 			if (cpuId < 0) throw new IllegalArgumentException("illegal processor ID");
 
 			Pcb pcb = null;
-			for (int i = 0; i < queue.size(); i++) {
+			for (int i = 0; i < queue.size(); i++)
+			{
 				List<Pcb> level = queue.get(i);
 				if (level.isEmpty()) continue;
-				
-				if (affinities[cpuId][i] > 0) {
+
+				if (affinities[cpuId][i] > 0)
+				{
 					for (Pcb process : level)
-						if (process.getAffinity() == cpuId) {
-							pcb = process; break;
+						if (process.getAffinity() == cpuId)
+						{
+							pcb = process;
+							break;
 						}
 					level.remove(pcb);
 					--affinities[cpuId][i];
-				} else {
+				}
+				else
+				{
 					pcb = level.remove(0);
 					pcb.getPcbData().setAffinity(cpuId);
 				}
 				break;
 			}
-			
+
 			if (pcb == null) return null;
 
 			pcb.setTimeslice(quantum[pcb.getPcbData().getPriority()]);
 			return pcb;
-		} catch (IllegalArgumentException e) {
+		}
+		catch (IllegalArgumentException e)
+		{
 			e.printStackTrace();
 			return null;
 		}
 	}
 
 	@Override
-	public synchronized void put(Pcb pcb) {
+	public synchronized void put(Pcb pcb)
+	{
 		// O(1)
-		try {
+		try
+		{
 			if (pcb == null) throw new IllegalArgumentException("argument to put() is null");
-			
+
 			if (affinities == null)
 				affinities = new int[Pcb.RUNNING.length][queue.size()];
 
 			int priority = pcb.getPriority() % queue.size();
 			ProcessState state = pcb.getPreviousState();
-			if (state == ProcessState.CREATED) {
+			if (state == ProcessState.CREATED)
+			{
 				PcbData data = new PcbData(priority);
 				pcb.setPcbData(data);
-			} else {
+			}
+			else
+			{
 				PcbData data = pcb.getPcbData();
 				priority = data.getPriority();
-				if (state == ProcessState.BLOCKED) {
+				if (state == ProcessState.BLOCKED)
+				{
 					if (priority > 0) --priority;
-				} else {
+				}
+				else
+				{
 					if (priority < queue.size() - 1) ++priority;
 				}
 				data.setPriority(priority);
@@ -97,19 +121,23 @@ public class MFQScheduler extends Scheduler {
 
 			++affinities[pcb.getAffinity()][priority];
 			queue.get(priority).add(pcb);
-		} catch (IllegalArgumentException e) {
+		}
+		catch (IllegalArgumentException e)
+		{
 			e.printStackTrace();
 		}
 	}
 
-	private synchronized void age() {
+	private synchronized void age()
+	{
 		// O(numOfProcesses)
-		for (int i = 1; i < queue.size(); i++) {
+		for (int i = 1; i < queue.size(); i++)
+		{
 			if (queue.get(i).isEmpty()) continue;
-			
+
 			queue.get(i).forEach(pcb ->
-			pcb.getPcbData().setPriority(pcb.getPcbData().getPriority() - 1));
-			
+										 pcb.getPcbData().setPriority(pcb.getPcbData().getPriority() - 1));
+
 			queue.get(i - 1).addAll(queue.get(i));
 			queue.get(i).clear();
 		}
